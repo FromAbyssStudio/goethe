@@ -18,4 +18,8 @@ cmake --build build --target hello_vn
 
 Options are in the top-level `CMakeLists.txt`; optional backends/deps default OFF for portability.
 
+### Resources
+
+- Visual novel overview and best practices: [How to Make Visual Novels](https://arimiadev.com/how-to-make-visual-novels/)
+
 
