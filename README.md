@@ -18,19 +18,20 @@ cmake --build build -j
   ```
 
 - visual_vn (requires SDL3):
-  - With vendored SDL3 (recommended for portability):
+  - **Recommended (vendored SDL3)** - fetches and builds SDL3 automatically:
     ```
     cmake -S . -B build -DGOETHE_BACKEND_SDL3=ON -DGOETHE_VENDOR_SDL3=ON
     cmake --build build --target visual_vn
     ./build/samples/visual_vn/visual_vn
     ```
-  - Or with a system SDL3 install (pkg provides `SDL3::SDL3` config):
+  - **Alternative (system SDL3)** - requires SDL3 development package:
     ```
+    # Install SDL3 dev package first (e.g., pacman -S sdl3)
     cmake -S . -B build -DGOETHE_BACKEND_SDL3=ON
     cmake --build build --target visual_vn
     ./build/samples/visual_vn/visual_vn
     ```
-  - Note: `GOETHE_SDL3_HEADLESS=ON` will skip building `visual_vn`.
+  - Note: `GOETHE_SDL3_HEADLESS=ON` will skip building `visual_vn` (for CI/headless builds).
 
 ### Tests (GoogleTest + CTest)
 
