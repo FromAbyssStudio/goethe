@@ -17,6 +17,9 @@ Testing/
 build.ninja
 .ninja*
 
+# GoogleTest discovery artifacts (should be in build tree, ignore if leaked)
+tests/*_include.cmake
+
 # Binaries and libs (safety)
 *.o
 *.obj
