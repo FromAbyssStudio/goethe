@@ -1,0 +1,8 @@
+{
+  "title": "Visual VN Sample",
+  "entry_scene": "assets/scenes/intro.gsc",
+  "locales": ["en-GB"],
+  "renderer": {"target_fps": 60, "low_power": false}
+}
+
+

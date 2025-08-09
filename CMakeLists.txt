@@ -143,6 +143,9 @@ install(FILES
 if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/samples/hello_vn/CMakeLists.txt)
   add_subdirectory(samples/hello_vn)
 endif()
+if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/samples/visual_vn/CMakeLists.txt)
+  add_subdirectory(samples/visual_vn)
+endif()
 
 # Convenience clean targets
 # `cmake --build build --target clean` is provided by generators, but we
