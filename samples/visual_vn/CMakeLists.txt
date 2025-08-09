@@ -3,6 +3,11 @@ if(NOT GOETHE_BACKEND_SDL3)
   return()
 endif()
 
+if(GOETHE_SDL3_HEADLESS)
+  message(STATUS "samples/visual_vn: Skipped for headless SDL build (GOETHE_SDL3_HEADLESS=ON)")
+  return()
+endif()
+
 add_executable(visual_vn main.cpp)
 target_link_libraries(visual_vn PRIVATE goethe SDL3::SDL3)
 target_include_directories(visual_vn PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../../sdk)

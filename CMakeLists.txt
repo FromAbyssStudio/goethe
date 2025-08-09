@@ -19,6 +19,7 @@ option(GOETHE_WITH_HRTF     "Enable HRTF DSP path" OFF)
 # SDL3 integration and install
 option(GOETHE_VENDOR_SDL3   "Fetch/build SDL3 with the project (vendored)" OFF)
 option(GOETHE_INSTALL_SDL3  "Ensure SDL3 is included in install (via vendoring)" OFF)
+option(GOETHE_SDL3_HEADLESS "Build SDL3 for headless/offscreen only (no X11/Wayland)" OFF)
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -95,6 +96,20 @@ if(_need_sdl3)
     set(SDL_STATIC OFF CACHE BOOL "" FORCE)
     # Ensure SDL exposes install() rules when vendored so `cmake --install` installs SDL too
     set(SDL_INSTALL ON CACHE BOOL "" FORCE)
+    # Some builds disable install when used as subproject; force-enable if available
+    set(SDL_DISABLE_INSTALL OFF CACHE BOOL "" FORCE)
+
+    # Optional headless/offscreen build to avoid X11/Wayland dependencies
+    if(GOETHE_SDL3_HEADLESS)
+      set(SDL_VIDEO ON CACHE BOOL "" FORCE)
+      set(SDL_OFFSCREEN ON CACHE BOOL "" FORCE)
+      set(SDL_DUMMYVIDEO ON CACHE BOOL "" FORCE)
+      set(SDL_X11 OFF CACHE BOOL "" FORCE)
+      set(SDL_WAYLAND OFF CACHE BOOL "" FORCE)
+      set(SDL_OPENGL OFF CACHE BOOL "" FORCE)
+      set(SDL_OPENGLES OFF CACHE BOOL "" FORCE)
+      set(SDL_VULKAN OFF CACHE BOOL "" FORCE)
+    endif()
     FetchContent_MakeAvailable(SDL3)
   else()
     find_package(SDL3 REQUIRED CONFIG)
@@ -115,6 +130,11 @@ install(TARGETS ${GOETHE_ENGINE_NAME}
 )
 
 install(FILES sdk/goethe.h DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
+
+# Install schemas
+install(DIRECTORY schemas/
+  DESTINATION ${CMAKE_INSTALL_DATADIR}/goethe/schemas
+  FILES_MATCHING PATTERN "*.json")
 
 install(EXPORT GoetheTargets
   FILE GoetheTargets.cmake
@@ -156,5 +176,10 @@ add_custom_target(distclean
   COMMAND ${CMAKE_COMMAND} -E chdir "${CMAKE_SOURCE_DIR}" ${CMAKE_COMMAND} -E rm -rf "${CMAKE_BINARY_DIR}"
   COMMENT "Distclean: remove entire build directory (safe chdir)"
 )
+
+# Tools
+if(GOETHE_BUILD_TOOLS)
+  add_subdirectory(tools/goethec)
+endif()
 
 

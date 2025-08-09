@@ -1,0 +1,233 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://goethe.dev/schemas/gsf-a.schema.json",
+  "title": "Goethe Story Format - Authoring (GSF-A)",
+  "type": "object",
+  "required": ["version", "metadata", "locales", "characters", "scenes", "routes"],
+  "properties": {
+    "version": { "type": "integer", "enum": [1] },
+    "metadata": {
+      "type": "object",
+      "required": ["id", "title"],
+      "properties": {
+        "id": { "type": "string", "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$" },
+        "title": { "$ref": "#/definitions/localeStringMap" },
+        "creators": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["name"],
+            "properties": {
+              "name": { "type": "string" },
+              "handle": { "type": "string" },
+              "pubkey": { "type": "string", "pattern": "^ed25519:[1-9A-HJ-NP-Za-km-z]+$" }
+            },
+            "additionalProperties": false
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "locales": {
+      "type": "array",
+      "items": { "type": "string" },
+      "minItems": 1
+    },
+    "characters": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "names"],
+        "properties": {
+          "id": { "type": "string", "pattern": "^[a-z][a-z0-9_]*$" },
+          "names": { "$ref": "#/definitions/localeStringMap" },
+          "profile": {
+            "type": "object",
+            "properties": {
+              "default_mood": { "type": "string" },
+              "traits": { "type": "array", "items": { "type": "string" } },
+              "voice": { "$ref": "#/definitions/localeStringMap" }
+            },
+            "additionalProperties": true
+          },
+          "sprites": {
+            "type": "object",
+            "properties": {
+              "base": { "type": "string" },
+              "layers": { "type": "array", "items": { "type": "string" } },
+              "expressions": {
+                "type": "object",
+                "additionalProperties": {
+                  "type": "object",
+                  "additionalProperties": { "type": "string" }
+                }
+              }
+            },
+            "additionalProperties": true
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "scenes": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "script"],
+        "properties": {
+          "id": { "type": "string" },
+          "background": { "type": "string" },
+          "music": { "type": "string" },
+          "script": {
+            "type": "array",
+            "items": { "$ref": "#/definitions/scriptNode" }
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "routes": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "entry_scene"],
+        "properties": {
+          "id": { "type": "string" },
+          "entry_scene": { "type": "string" },
+          "flags": { "type": "array", "items": { "type": "string" } }
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "definitions": {
+    "localeStringMap": {
+      "type": "object",
+      "additionalProperties": { "type": "string" },
+      "minProperties": 1
+    },
+    "emotion": {
+      "type": "object",
+      "required": ["type"],
+      "properties": {
+        "type": { "type": "string" },
+        "intensity": { "type": "number", "minimum": 0, "maximum": 1 },
+        "valence": { "type": "number", "minimum": -1, "maximum": 1 },
+        "arousal": { "type": "number", "minimum": 0, "maximum": 1 }
+      },
+      "additionalProperties": false
+    },
+    "sayNode": {
+      "type": "object",
+      "required": ["say"],
+      "properties": {
+        "say": {
+          "type": "object",
+          "required": ["id", "who", "text"],
+          "properties": {
+            "id": { "type": "string" },
+            "who": { "type": "string" },
+            "mood": { "type": "string" },
+            "emotion": { "$ref": "#/definitions/emotion" },
+            "text": { "$ref": "#/definitions/localeStringMap" },
+            "voice": { "$ref": "#/definitions/localeStringMap" }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    "choiceNode": {
+      "type": "object",
+      "required": ["choice"],
+      "properties": {
+        "choice": {
+          "type": "object",
+          "required": ["id", "options"],
+          "properties": {
+            "id": { "type": "string" },
+            "options": {
+              "type": "array",
+              "minItems": 1,
+              "items": {
+                "type": "object",
+                "required": ["key", "text"],
+                "properties": {
+                  "key": { "type": "string" },
+                  "text": { "$ref": "#/definitions/localeStringMap" }
+                },
+                "additionalProperties": false
+              }
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    "branchNode": {
+      "type": "object",
+      "required": ["branch"],
+      "properties": {
+        "branch": {
+          "type": "object",
+          "required": ["on", "cases"],
+          "properties": {
+            "on": { "type": "string" },
+            "cases": {
+              "type": "object",
+              "additionalProperties": {
+                "type": "array",
+                "items": { "$ref": "#/definitions/scriptNode" }
+              }
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    "ifNode": {
+      "type": "object",
+      "required": ["if"],
+      "properties": {
+        "if": { "type": "object", "additionalProperties": true },
+        "then": { "type": "array", "items": { "$ref": "#/definitions/scriptNode" } },
+        "else": { "type": "array", "items": { "$ref": "#/definitions/scriptNode" } }
+      },
+      "additionalProperties": false
+    },
+    "setNode": {
+      "type": "object",
+      "required": ["set"],
+      "properties": { "set": { "type": "object", "additionalProperties": true } },
+      "additionalProperties": false
+    },
+    "gotoNode": {
+      "type": "object",
+      "required": ["goto"],
+      "properties": { "goto": { "type": "string" } },
+      "additionalProperties": false
+    },
+    "endNode": {
+      "type": "object",
+      "required": ["end"],
+      "properties": { "end": { "type": "object" } },
+      "additionalProperties": false
+    },
+    "scriptNode": {
+      "oneOf": [
+        { "$ref": "#/definitions/sayNode" },
+        { "$ref": "#/definitions/choiceNode" },
+        { "$ref": "#/definitions/branchNode" },
+        { "$ref": "#/definitions/ifNode" },
+        { "$ref": "#/definitions/setNode" },
+        { "$ref": "#/definitions/gotoNode" },
+        { "$ref": "#/definitions/endNode" }
+      ]
+    }
+  },
+  "additionalProperties": false
+}
+
+
