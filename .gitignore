@@ -1,3 +1,43 @@
+# Build directories
+build/
+out/
+dist/
+cmake-build-*/
+
+# CMake generated files (if in-source or accidentally committed)
+CMakeCache.txt
+CMakeFiles/
+cmake_install.cmake
+Makefile
+install_manifest.txt
+compile_commands.json
+compile_flags.txt
+CTestTestfile.cmake
+Testing/
+build.ninja
+.ninja*
+
+# Binaries and libs (safety)
+*.o
+*.obj
+*.lo
+*.la
+*.a
+*.lib
+*.dll
+*.so
+*.dylib
+*.pdb
+*.exe
+
+# Editors/OS
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+*.swo
+
 # Prerequisites
 *.d
 
