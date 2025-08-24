@@ -13,14 +13,14 @@ CompressionManager& CompressionManager::instance() {
 void CompressionManager::initialize(const std::string& backend_name) {
     // Register all available backends
     register_compression_backends();
-    
+
     // Create the backend
     if (backend_name.empty()) {
         backend_ = CompressionFactory::instance().create_best_backend();
     } else {
         backend_ = CompressionFactory::instance().create_backend(backend_name);
     }
-    
+
     initialized_ = true;
 }
 
@@ -118,7 +118,7 @@ bool CompressionManager::is_initialized() const {
 void CompressionManager::switch_backend(const std::string& backend_name) {
     // Register backends if not already done
     register_compression_backends();
-    
+
     try {
         // Try to create new backend
         backend_ = CompressionFactory::instance().create_backend(backend_name);

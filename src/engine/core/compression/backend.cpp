@@ -56,7 +56,7 @@ std::vector<uint8_t> CompressionBackend::compress_with_statistics(const uint8_t*
     if (!statistics_enabled_) {
         return compress(data, size);
     }
-    
+
     StatisticsScope scope(name(), version(), true);
     try {
         auto result = compress(data, size);
@@ -74,7 +74,7 @@ std::vector<uint8_t> CompressionBackend::decompress_with_statistics(const uint8_
     if (!statistics_enabled_) {
         return decompress(data, size);
     }
-    
+
     StatisticsScope scope(name(), version(), false);
     try {
         auto result = decompress(data, size);

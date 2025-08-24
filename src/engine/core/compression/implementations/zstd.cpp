@@ -9,8 +9,7 @@
 namespace goethe {
 
 ZstdCompressionBackend::ZstdCompressionBackend()
-    : compression_level_(6)
-    , options_() {
+    : compression_level_(6), options_() {
 #ifdef GOETHE_ZSTD_AVAILABLE
     cctx_ = nullptr;
     dctx_ = nullptr;
@@ -67,14 +66,9 @@ std::vector<uint8_t> ZstdCompressionBackend::compress(const uint8_t* data, std::
     std::vector<uint8_t> compressed(compressed_bound);
     
     // Compress the data
-    const size_t compressed_size = ZSTD_compressCCtx(
-        cctx_,
-        compressed.data(),
-        compressed_bound,
-        data,
-        size,
-        compression_level_
-    );
+    const size_t compressed_size = ZSTD_compressCCtx(cctx_, compressed.data(),
+                                                    compressed_bound, data, size,
+                                                    compression_level_);
     
     check_zstd_error(compressed_size, "compression");
     
@@ -106,13 +100,8 @@ std::vector<uint8_t> ZstdCompressionBackend::decompress(const uint8_t* data, std
     std::vector<uint8_t> decompressed(decompressed_size);
     
     // Decompress the data
-    const size_t actual_size = ZSTD_decompressDCtx(
-        dctx_,
-        decompressed.data(),
-        decompressed_size,
-        data,
-        size
-    );
+    const size_t actual_size = ZSTD_decompressDCtx(dctx_, decompressed.data(),
+                                                  decompressed_size, data, size);
     
     check_zstd_error(actual_size, "decompression");
     
@@ -128,8 +117,8 @@ std::vector<uint8_t> ZstdCompressionBackend::decompress(const uint8_t* data, std
 
 std::string ZstdCompressionBackend::version() const {
 #ifdef GOETHE_ZSTD_AVAILABLE
-    return std::to_string(ZSTD_VERSION_MAJOR) + "." + 
-           std::to_string(ZSTD_VERSION_MINOR) + "." + 
+    return std::to_string(ZSTD_VERSION_MAJOR) + "." +
+           std::to_string(ZSTD_VERSION_MINOR) + "." +
            std::to_string(ZSTD_VERSION_RELEASE);
 #else
     return "not available";

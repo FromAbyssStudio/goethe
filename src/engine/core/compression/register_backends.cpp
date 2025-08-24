@@ -7,12 +7,12 @@ namespace goethe {
 
 void register_compression_backends() {
     auto& factory = CompressionFactory::instance();
-    
+
     // Register null backend (always available)
     factory.register_backend("null", []() {
         return std::make_unique<NullCompressionBackend>();
     });
-    
+
     // Register zstd backend (if available)
     factory.register_backend("zstd", []() {
         return std::make_unique<ZstdCompressionBackend>();

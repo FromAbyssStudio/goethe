@@ -21,17 +21,23 @@ public:
     std::vector<uint8_t> decompress(const uint8_t* data, std::size_t size) override;
 
     // Metadata
-    std::string name() const override { return "zstd"; }
+    std::string name() const override {
+        return "zstd";
+    }
     std::string version() const override;
     bool is_available() const override;
 
     // Compression level (1-22 for zstd)
     void set_compression_level(int level) override;
-    int get_compression_level() const override { return compression_level_; }
+    int get_compression_level() const override {
+        return compression_level_;
+    }
 
     // Options
     void set_options(const CompressionOptions& options) override;
-    CompressionOptions get_options() const override { return options_; }
+    CompressionOptions get_options() const override {
+        return options_;
+    }
 
     // Zstd-specific methods
     void set_window_log(int window_log);

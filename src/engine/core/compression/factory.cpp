@@ -6,10 +6,10 @@ namespace goethe {
 
 // Priority order for backend auto-selection (best first)
 const std::vector<std::string> CompressionFactory::backend_priority_ = {
-    "zstd",     // Best compression ratio and speed
-    "lz4",      // Very fast
-    "zlib",     // Widely supported
-    "null"      // Fallback (no compression)
+    "zstd",  // Best compression ratio and speed
+    "lz4",   // Very fast
+    "zlib",  // Widely supported
+    "null"   // Fallback (no compression)
 };
 
 CompressionFactory& CompressionFactory::instance() {
@@ -26,12 +26,12 @@ std::unique_ptr<CompressionBackend> CompressionFactory::create_backend(const std
     if (it == backends_.end()) {
         throw CompressionError("Unknown compression backend: " + name);
     }
-    
+
     auto backend = it->second();
     if (!backend->is_available()) {
         throw CompressionError("Compression backend '" + name + "' is not available");
     }
-    
+
     return backend;
 }
 
@@ -53,7 +53,7 @@ std::unique_ptr<CompressionBackend> CompressionFactory::create_best_backend() {
             return create_backend(name);
         }
     }
-    
+
     // If no backend is available, throw an error
     throw CompressionError("No compression backends are available");
 }
@@ -63,7 +63,7 @@ bool CompressionFactory::is_backend_available(const std::string& name) const {
     if (it == backends_.end()) {
         return false;
     }
-    
+
     auto backend = it->second();
     return backend->is_available();
 }
