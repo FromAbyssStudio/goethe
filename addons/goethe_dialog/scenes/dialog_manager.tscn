@@ -1,0 +1,56 @@
+[gd_scene load_steps=2 format=3 uid="uid://bqxvn8yqxqxqx"]
+
+[ext_resource type="Script" path="res://addons/goethe_dialog/scripts/goethe_dialog_manager.gd" id="1_0xqxq"]
+
+[node name="DialogManager" type="Node"]
+script = ExtResource("1_0xqxq")
+
+[node name="ConditionSystem" type="Node" parent="."]
+
+[node name="DialogUI" type="Control" parent="."]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+
+[node name="VBoxContainer" type="VBoxContainer" parent="DialogUI"]
+layout_mode = 1
+anchors_preset = 12
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_top = -200.0
+
+[node name="SpeakerLabel" type="Label" parent="DialogUI/VBoxContainer"]
+layout_mode = 2
+text = "Speaker"
+font_size = 18
+font_color = Color(1, 1, 0, 1)
+
+[node name="TextLabel" type="Label" parent="DialogUI/VBoxContainer"]
+layout_mode = 2
+text = "Dialog text will appear here..."
+font_size = 16
+autowrap_mode = 2
+
+[node name="ChoicesContainer" type="VBoxContainer" parent="DialogUI/VBoxContainer"]
+layout_mode = 2
+
+[node name="ButtonContainer" type="HBoxContainer" parent="DialogUI/VBoxContainer"]
+layout_mode = 2
+
+[node name="PreviousButton" type="Button" parent="DialogUI/VBoxContainer/ButtonContainer"]
+layout_mode = 2
+text = "Previous"
+
+[node name="NextButton" type="Button" parent="DialogUI/VBoxContainer/ButtonContainer"]
+layout_mode = 2
+text = "Next"
+
+[node name="AutoButton" type="Button" parent="DialogUI/VBoxContainer/ButtonContainer"]
+layout_mode = 2
+text = "Auto"
+
+[node name="SkipButton" type="Button" parent="DialogUI/VBoxContainer/ButtonContainer"]
+layout_mode = 2
+text = "Skip"
