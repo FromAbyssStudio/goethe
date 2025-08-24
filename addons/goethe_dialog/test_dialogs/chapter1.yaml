@@ -1,0 +1,17 @@
+
+id: chapter1_intro
+nodes:
+  - id: greeting
+    speaker: Alice
+    text: Hello, welcome to our story!
+  - id: response
+    speaker: Bob
+    text: Thank you, I'm excited to begin!
+  - id: choice
+    speaker: Alice
+    text: What would you like to do?
+    choices:
+      - id: explore
+        text: Explore the world
+      - id: talk
+        text: Talk to people

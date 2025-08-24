@@ -1,0 +1,51 @@
+[gd_scene load_steps=2 format=3 uid="uid://bqxvn8yqxqxqx"]
+
+[ext_resource type="Script" path="res://addons/goethe_dialog/scenes/dialog_editor.gd" id="1_0xqxq"]
+
+[node name="DialogEditor" type="Window"]
+script = ExtResource("1_0xqxq")
+
+[node name="VBoxContainer" type="VBoxContainer" parent="."]
+
+[node name="MenuBar" type="HBoxContainer" parent="VBoxContainer"]
+
+[node name="FileMenu" type="MenuButton" parent="VBoxContainer/MenuBar"]
+text = "File"
+
+[node name="HSplitContainer" type="HSplitContainer" parent="VBoxContainer"]
+
+[node name="DialogTree" type="Tree" parent="VBoxContainer/HSplitContainer"]
+split_offset = 300
+
+[node name="NodeEditor" type="VBoxContainer" parent="VBoxContainer/HSplitContainer"]
+
+[node name="NodeProperties" type="VBoxContainer" parent="VBoxContainer/HSplitContainer/NodeEditor"]
+
+[node name="IDLabel" type="Label" parent="VBoxContainer/HSplitContainer/NodeEditor/NodeProperties"]
+text = "Node ID:"
+
+[node name="IDEdit" type="LineEdit" parent="VBoxContainer/HSplitContainer/NodeEditor/NodeProperties"]
+
+[node name="SpeakerLabel" type="Label" parent="VBoxContainer/HSplitContainer/NodeEditor/NodeProperties"]
+text = "Speaker:"
+
+[node name="SpeakerEdit" type="LineEdit" parent="VBoxContainer/HSplitContainer/NodeEditor/NodeProperties"]
+
+[node name="TextLabel" type="Label" parent="VBoxContainer/HSplitContainer/NodeEditor/NodeProperties"]
+text = "Text:"
+
+[node name="TextEdit" type="TextEdit" parent="VBoxContainer/HSplitContainer/NodeEditor/NodeProperties"]
+custom_minimum_size = Vector2(0, 100)
+
+[node name="ChoicesLabel" type="Label" parent="VBoxContainer/HSplitContainer/NodeEditor/NodeEditor"]
+text = "Choices:"
+
+[node name="ChoicesList" type="ItemList" parent="VBoxContainer/HSplitContainer/NodeEditor/NodeEditor"]
+custom_minimum_size = Vector2(0, 150)
+
+[node name="AddChoiceButton" type="Button" parent="VBoxContainer/HSplitContainer/NodeEditor/NodeEditor"]
+text = "Add Choice"
+```
+
+```
+

@@ -1,0 +1,72 @@
+[gd_scene load_steps=4 format=3 uid="uid://bqxvn8yqxqxqx"]
+
+[ext_resource type="Script" path="res://addons/goethe_dialog/examples/basic_dialog/basic_dialog_example.gd" id="1_0xqxq"]
+[ext_resource type="Script" path="res://addons/goethe_dialog/examples/basic_dialog/dialog_ui.gd" id="2_0xqxq"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_1"]
+bg_color = Color(0.2, 0.2, 0.2, 0.8)
+corner_radius_top_left = 10
+corner_radius_top_right = 10
+corner_radius_bottom_right = 10
+corner_radius_bottom_left = 10
+
+[node name="BasicDialogExample" type="Node2D"]
+script = ExtResource("1_0xqxq")
+
+[node name="DialogManager" type="Node" parent="."]
+
+[node name="DialogUI" type="Control" parent="."]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+script = ExtResource("2_0xqxq")
+
+[node name="VBoxContainer" type="VBoxContainer" parent="DialogUI"]
+layout_mode = 1
+anchors_preset = 12
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 50.0
+offset_top = -200.0
+offset_right = -50.0
+offset_bottom = -50.0
+
+[node name="SpeakerLabel" type="Label" parent="DialogUI/VBoxContainer"]
+layout_mode = 2
+text = "Speaker"
+font_size = 18
+font_color = Color(1, 1, 0, 1)
+
+[node name="TextLabel" type="Label" parent="DialogUI/VBoxContainer"]
+layout_mode = 2
+text = "Dialog text will appear here..."
+font_size = 16
+autowrap_mode = 2
+
+[node name="PortraitTexture" type="TextureRect" parent="DialogUI/VBoxContainer"]
+layout_mode = 2
+custom_minimum_size = Vector2(0, 100)
+stretch_mode = 5
+
+[node name="ChoicesContainer" type="VBoxContainer" parent="DialogUI/VBoxContainer"]
+layout_mode = 2
+
+[node name="ButtonContainer" type="HBoxContainer" parent="DialogUI/VBoxContainer"]
+layout_mode = 2
+
+[node name="PreviousButton" type="Button" parent="DialogUI/VBoxContainer/ButtonContainer"]
+layout_mode = 2
+text = "Previous"
+
+[node name="NextButton" type="Button" parent="DialogUI/VBoxContainer/ButtonContainer"]
+layout_mode = 2
+text = "Next"
+
+[node name="StartButton" type="Button" parent="."]
+offset_left = 50.0
+offset_top = 50.0
+offset_right = 200.0
+offset_bottom = 100.0
+text = "Start Dialog"
