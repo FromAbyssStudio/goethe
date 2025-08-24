@@ -36,8 +36,7 @@ Makefile
 *.exe
 *.out
 *.app
-test_*
-simple_test
+
 
 # IDE files
 .vscode/
