@@ -1,0 +1,198 @@
+[gd_scene load_steps=2 format=3 uid="uid://bqxvn8yqxqxqx"]
+
+[ext_resource type="Script" path="res://addons/goethe_dialog/examples/visual_novel/visual_novel_example.gd" id="1_0xqxq"]
+
+[node name="VisualNovelExample" type="Node2D"]
+script = ExtResource("1_0xqxq")
+
+[node name="Background" type="Sprite2D" parent="."]
+position = Vector2(576, 324)
+scale = Vector2(1.125, 0.675)
+
+[node name="Characters" type="Node2D" parent="."]
+
+[node name="Alice" type="Sprite2D" parent="Characters"]
+position = Vector2(400, 400)
+visible = false
+
+[node name="Bob" type="Sprite2D" parent="Characters"]
+position = Vector2(750, 400)
+visible = false
+
+[node name="Narrator" type="Sprite2D" parent="Characters"]
+position = Vector2(576, 324)
+visible = false
+
+[node name="DialogManager" type="Node" parent="."]
+
+[node name="DialogUI" type="Control" parent="."]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+visible = false
+
+[node name="Background" type="Panel" parent="DialogUI"]
+layout_mode = 1
+anchors_preset = 12
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_top = -250.0
+
+[node name="VBoxContainer" type="VBoxContainer" parent="DialogUI/Background"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 20.0
+offset_top = 20.0
+offset_right = -20.0
+offset_bottom = -20.0
+
+[node name="SpeakerLabel" type="Label" parent="DialogUI/Background/VBoxContainer"]
+layout_mode = 2
+text = "Speaker"
+font_size = 18
+font_color = Color(1, 1, 0, 1)
+
+[node name="TextLabel" type="Label" parent="DialogUI/Background/VBoxContainer"]
+layout_mode = 2
+text = "Dialog text will appear here..."
+font_size = 16
+autowrap_mode = 2
+
+[node name="PortraitTexture" type="TextureRect" parent="DialogUI/Background/VBoxContainer"]
+layout_mode = 2
+custom_minimum_size = Vector2(0, 100)
+stretch_mode = 5
+
+[node name="ChoicesContainer" type="VBoxContainer" parent="DialogUI/Background/VBoxContainer"]
+layout_mode = 2
+
+[node name="ButtonContainer" type="HBoxContainer" parent="DialogUI/Background/VBoxContainer"]
+layout_mode = 2
+
+[node name="PreviousButton" type="Button" parent="DialogUI/Background/VBoxContainer/ButtonContainer"]
+layout_mode = 2
+text = "Previous"
+
+[node name="NextButton" type="Button" parent="DialogUI/Background/VBoxContainer/ButtonContainer"]
+layout_mode = 2
+text = "Next"
+
+[node name="AutoButton" type="Button" parent="DialogUI/Background/VBoxContainer/ButtonContainer"]
+layout_mode = 2
+text = "Auto"
+
+[node name="SkipButton" type="Button" parent="DialogUI/Background/VBoxContainer/ButtonContainer"]
+layout_mode = 2
+text = "Skip"
+
+[node name="MenuButton" type="Button" parent="."]
+offset_left = 50.0
+offset_top = 50.0
+offset_right = 150.0
+offset_bottom = 80.0
+text = "Menu"
+
+[node name="MenuPanel" type="Panel" parent="."]
+offset_left = 400.0
+offset_top = 200.0
+offset_right = 750.0
+offset_bottom = 450.0
+visible = false
+
+[node name="VBoxContainer" type="VBoxContainer" parent="MenuPanel"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 20.0
+offset_top = 20.0
+offset_right = -20.0
+offset_bottom = -20.0
+
+[node name="SaveButton" type="Button" parent="MenuPanel/VBoxContainer"]
+layout_mode = 2
+text = "Save Game"
+
+[node name="LoadButton" type="Button" parent="MenuPanel/VBoxContainer"]
+layout_mode = 2
+text = "Load Game"
+
+[node name="SettingsButton" type="Button" parent="MenuPanel/VBoxContainer"]
+layout_mode = 2
+text = "Settings"
+
+[node name="QuitButton" type="Button" parent="MenuPanel/VBoxContainer"]
+layout_mode = 2
+text = "Quit Game"
+
+[node name="SettingsPanel" type="Panel" parent="."]
+offset_left = 400.0
+offset_top = 200.0
+offset_right = 750.0
+offset_bottom = 500.0
+visible = false
+
+[node name="VBoxContainer" type="VBoxContainer" parent="SettingsPanel"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 20.0
+offset_top = 20.0
+offset_right = -20.0
+offset_bottom = -20.0
+
+[node name="Label" type="Label" parent="SettingsPanel/VBoxContainer"]
+layout_mode = 2
+text = "Settings"
+horizontal_alignment = 1
+
+[node name="TextSpeedSlider" type="HSlider" parent="SettingsPanel/VBoxContainer"]
+layout_mode = 2
+max_value = 3.0
+value = 1.0
+
+[node name="TextSpeedLabel" type="Label" parent="SettingsPanel/VBoxContainer"]
+layout_mode = 2
+text = "Text Speed"
+
+[node name="MusicVolumeSlider" type="HSlider" parent="SettingsPanel/VBoxContainer"]
+layout_mode = 2
+max_value = 1.0
+value = 0.7
+
+[node name="MusicVolumeLabel" type="Label" parent="SettingsPanel/VBoxContainer"]
+layout_mode = 2
+text = "Music Volume"
+
+[node name="SFXVolumeSlider" type="HSlider" parent="SettingsPanel/VBoxContainer"]
+layout_mode = 2
+max_value = 1.0
+value = 0.8
+
+[node name="SFXVolumeLabel" type="Label" parent="SettingsPanel/VBoxContainer"]
+layout_mode = 2
+text = "SFX Volume"
+
+[node name="AutoSpeedSlider" type="HSlider" parent="SettingsPanel/VBoxContainer"]
+layout_mode = 2
+max_value = 5.0
+value = 2.0
+
+[node name="AutoSpeedLabel" type="Label" parent="SettingsPanel/VBoxContainer"]
+layout_mode = 2
+text = "Auto Speed"
+
+[node name="CloseButton" type="Button" parent="SettingsPanel/VBoxContainer"]
+layout_mode = 2
+text = "Close"
+
+[node name="MusicPlayer" type="AudioStreamPlayer" parent="."]
+
+[node name="SFXPlayer" type="AudioStreamPlayer" parent="."]
+
+[node name="SaveSystem" type="Node" parent="."]
