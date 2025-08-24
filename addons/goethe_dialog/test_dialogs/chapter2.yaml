@@ -1,0 +1,9 @@
+
+id: chapter2_development
+nodes:
+  - id: intro
+    speaker: Narrator
+    text: The story continues...
+  - id: action
+    speaker: Alice
+    text: Let's see what happens next!
