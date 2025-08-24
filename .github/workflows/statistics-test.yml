@@ -96,7 +96,7 @@ jobs:
     
     - name: Collect test artifacts
       if: always()
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: statistics-test-results-${{ matrix.compiler }}-${{ matrix.backend }}
         path: |

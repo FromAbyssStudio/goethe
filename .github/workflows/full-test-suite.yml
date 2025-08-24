@@ -99,7 +99,7 @@ jobs:
     
     - name: Collect build artifacts
       if: always()
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: build-artifacts-${{ matrix.compiler }}-${{ matrix.build-type }}-${{ matrix.backend }}
         path: |
@@ -151,7 +151,7 @@ jobs:
         fi
     
     - name: Upload static analysis results
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       if: always()
       with:
         name: static-analysis-results
