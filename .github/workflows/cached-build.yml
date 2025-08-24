@@ -1,0 +1,75 @@
+name: Cached Build
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+env:
+  CTEST_OUTPUT_ON_FAILURE: 1
+
+jobs:
+  cached-build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        compiler: [gcc-12, clang-15]
+        build-type: [Debug, Release]
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Cache dependencies
+      uses: actions/cache@v3
+      with:
+        path: |
+          ~/.cache/ccache
+          build
+        key: ${{ runner.os }}-${{ matrix.compiler }}-${{ matrix.build-type }}-${{ hashFiles('CMakeLists.txt', 'src/**/*.cpp', 'include/**/*.hpp') }}
+        restore-keys: |
+          ${{ runner.os }}-${{ matrix.compiler }}-${{ matrix.build-type }}-
+          ${{ runner.os }}-${{ matrix.compiler }}-
+          ${{ runner.os }}-
+    
+    - name: Install dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y cmake build-essential libyaml-cpp-dev libgtest-dev libgmock-dev libssl-dev libzstd-dev pkg-config ccache
+    
+    - name: Set up compiler
+      run: |
+        if [[ "${{ matrix.compiler }}" == gcc-* ]]; then
+          sudo apt-get install -y ${{ matrix.compiler }}
+          echo "CC=gcc" >> $GITHUB_ENV
+          echo "CXX=g++" >> $GITHUB_ENV
+        else
+          sudo apt-get install -y ${{ matrix.compiler }}
+          echo "CC=clang" >> $GITHUB_ENV
+          echo "CXX=clang++" >> $GITHUB_ENV
+        fi
+    
+    - name: Configure CMake with ccache
+      run: |
+        mkdir -p build
+        cd build
+        cmake -DCMAKE_BUILD_TYPE=${{ matrix.build-type }} \
+              -DCMAKE_C_COMPILER=$CC \
+              -DCMAKE_CXX_COMPILER=$CXX \
+              -DCMAKE_CXX_FLAGS="-Wall -Wextra" \
+              -DCMAKE_C_COMPILER_LAUNCHER=ccache \
+              -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
+              ..
+    
+    - name: Build with ccache
+      run: |
+        cd build
+        make -j$(nproc)
+    
+    - name: Show ccache statistics
+      run: |
+        ccache -s
+    
+    - name: Run tests
+      run: |
+        cd build
+        ctest --output-on-failure --verbose --timeout 120

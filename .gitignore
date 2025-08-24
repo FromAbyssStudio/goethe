@@ -1,48 +1,11 @@
-# Build directories
+# Build artifacts
 build/
-out/
-dist/
-cmake-build-*/
-
-# CMake generated files (if in-source or accidentally committed)
-CMakeCache.txt
 CMakeFiles/
+CMakeCache.txt
 cmake_install.cmake
 Makefile
-install_manifest.txt
-compile_commands.json
-compile_flags.txt
-CTestTestfile.cmake
-Testing/
-build.ninja
-.ninja*
-
-# GoogleTest discovery artifacts (should be in build tree, ignore if leaked)
-tests/*_include.cmake
-
-# Binaries and libs (safety)
-*.o
-*.obj
-*.lo
-*.la
-*.a
-*.lib
-*.dll
-*.so
-*.dylib
-*.pdb
-*.exe
-
-# Editors/OS
-.DS_Store
-Thumbs.db
-.idea/
-.vscode/
-*.swp
-*.swo
-
-# Prerequisites
-*.d
+*.cmake
+!CMakeLists.txt
 
 # Compiled Object files
 *.slo
@@ -73,3 +36,52 @@ Thumbs.db
 *.exe
 *.out
 *.app
+test_*
+simple_test
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Temporary files
+*.tmp
+*.temp
+*.log
+
+# Package files
+*.tar.gz
+*.zip
+*.rar
+
+# Documentation build
+docs/_build/
+docs/html/
+
+# Test coverage
+*.gcov
+*.gcda
+*.gcno
+coverage/
+
+# Valgrind output
+*.vglog
+
+# Profiling data
+*.prof
+*.gprof
+
+# Backup files
+*.bak
+*.backup

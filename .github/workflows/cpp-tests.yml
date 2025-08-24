@@ -1,0 +1,422 @@
+name: C++ Tests
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+env:
+  # Global environment variables
+  CTEST_OUTPUT_ON_FAILURE: 1
+  CTEST_PROGRESS_OUTPUT: 1
+
+jobs:
+  # Linux builds with different compilers
+  linux-gcc:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        compiler: [gcc-11, gcc-12, gcc-13]
+        build-type: [Debug, Release, RelWithDebInfo]
+        include:
+          - compiler: gcc-11
+            compiler-version: "11"
+          - compiler: gcc-12
+            compiler-version: "12"
+          - compiler: gcc-13
+            compiler-version: "13"
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0  # Full history for better blame info
+    
+    - name: Install dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y cmake build-essential libyaml-cpp-dev libgtest-dev libgmock-dev libssl-dev libzstd-dev pkg-config
+    
+    - name: Set up GCC
+      run: |
+        sudo apt-get install -y ${{ matrix.compiler }}
+        echo "CC=gcc" >> $GITHUB_ENV
+        echo "CXX=g++" >> $GITHUB_ENV
+        echo "GCC_VERSION=${{ matrix.compiler-version }}" >> $GITHUB_ENV
+    
+    - name: Configure CMake
+      run: |
+        mkdir build
+        cd build
+        cmake -DCMAKE_BUILD_TYPE=${{ matrix.build-type }} \
+              -DCMAKE_C_COMPILER=$CC \
+              -DCMAKE_CXX_COMPILER=$CXX \
+              -DCMAKE_EXPORT_COMPILE_COMMANDS=ON \
+              -DCMAKE_CXX_FLAGS="-Wall -Wextra -Wpedantic" \
+              ..
+    
+    - name: Build
+      run: |
+        cd build
+        make -j$(nproc) VERBOSE=1
+    
+    - name: Run tests
+      run: |
+        cd build
+        ctest --output-on-failure --verbose --timeout 300
+    
+    - name: Run individual test executables
+      if: matrix.build-type == 'Debug'
+      run: |
+        cd build
+        # Run individual test executables for more detailed output
+        for test_exe in test_* minimal_* simple_* statistics_*; do
+          if [ -f "$test_exe" ] && [ -x "$test_exe" ]; then
+            echo "Running $test_exe..."
+            ./$test_exe
+          fi
+        done
+
+  linux-clang:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        compiler: [clang-14, clang-15, clang-16]
+        build-type: [Debug, Release]
+        include:
+          - compiler: clang-14
+            compiler-version: "14"
+          - compiler: clang-15
+            compiler-version: "15"
+          - compiler: clang-16
+            compiler-version: "16"
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+    
+    - name: Install dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y cmake build-essential libyaml-cpp-dev libgtest-dev libgmock-dev libssl-dev libzstd-dev pkg-config
+    
+    - name: Set up Clang
+      run: |
+        sudo apt-get install -y ${{ matrix.compiler }}
+        echo "CC=clang" >> $GITHUB_ENV
+        echo "CXX=clang++" >> $GITHUB_ENV
+        echo "CLANG_VERSION=${{ matrix.compiler-version }}" >> $GITHUB_ENV
+    
+    - name: Configure CMake
+      run: |
+        mkdir build
+        cd build
+        cmake -DCMAKE_BUILD_TYPE=${{ matrix.build-type }} \
+              -DCMAKE_C_COMPILER=$CC \
+              -DCMAKE_CXX_COMPILER=$CXX \
+              -DCMAKE_EXPORT_COMPILE_COMMANDS=ON \
+              -DCMAKE_CXX_FLAGS="-Wall -Wextra -Wpedantic" \
+              ..
+    
+    - name: Build
+      run: |
+        cd build
+        make -j$(nproc) VERBOSE=1
+    
+    - name: Run tests
+      run: |
+        cd build
+        ctest --output-on-failure --verbose --timeout 300
+
+  # macOS builds
+  macos:
+    runs-on: macos-latest
+    strategy:
+      matrix:
+        compiler: [clang, gcc-12]
+        build-type: [Debug, Release]
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+    
+    - name: Install dependencies
+      run: |
+        brew update
+        brew install cmake yaml-cpp googletest openssl zstd pkg-config
+    
+    - name: Set up compiler
+      run: |
+        if [ "${{ matrix.compiler }}" = "gcc-12" ]; then
+          brew install gcc@12
+          echo "CC=gcc-12" >> $GITHUB_ENV
+          echo "CXX=g++-12" >> $GITHUB_ENV
+        else
+          echo "CC=clang" >> $GITHUB_ENV
+          echo "CXX=clang++" >> $GITHUB_ENV
+        fi
+    
+    - name: Configure CMake
+      run: |
+        mkdir build
+        cd build
+        cmake -DCMAKE_BUILD_TYPE=${{ matrix.build-type }} \
+              -DCMAKE_C_COMPILER=$CC \
+              -DCMAKE_CXX_COMPILER=$CXX \
+              -DCMAKE_EXPORT_COMPILE_COMMANDS=ON \
+              -DCMAKE_CXX_FLAGS="-Wall -Wextra -Wpedantic" \
+              ..
+    
+    - name: Build
+      run: |
+        cd build
+        make -j$(sysctl -n hw.ncpu) VERBOSE=1
+    
+    - name: Run tests
+      run: |
+        cd build
+        ctest --output-on-failure --verbose --timeout 300
+
+  # Windows builds
+  windows:
+    runs-on: windows-latest
+    strategy:
+      matrix:
+        compiler: [msvc, clang-cl]
+        build-type: [Debug, Release]
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+    
+    - name: Install dependencies
+      run: |
+        # Install vcpkg and dependencies
+        git clone https://github.com/Microsoft/vcpkg.git
+        cd vcpkg
+        ./bootstrap-vcpkg.bat
+        ./vcpkg install yaml-cpp gtest openssl zstd
+        echo "VCPKG_ROOT=$PWD" >> $GITHUB_ENV
+        cd ..
+    
+    - name: Set up compiler
+      if: matrix.compiler == 'clang-cl'
+      run: |
+        # Install LLVM for clang-cl
+        choco install llvm
+    
+    - name: Configure CMake
+      run: |
+        mkdir build
+        cd build
+        cmake -DCMAKE_BUILD_TYPE=${{ matrix.build-type }} \
+              -DCMAKE_TOOLCHAIN_FILE=$env:VCPKG_ROOT/scripts/buildsystems/vcpkg.cmake \
+              -DCMAKE_EXPORT_COMPILE_COMMANDS=ON \
+              -DCMAKE_CXX_FLAGS="/W4" \
+              ..
+    
+    - name: Build
+      run: |
+        cd build
+        cmake --build . --config ${{ matrix.build-type }} --parallel --verbose
+    
+    - name: Run tests
+      run: |
+        cd build
+        ctest --output-on-failure --verbose --timeout 300 -C ${{ matrix.build-type }}
+
+  # Code quality checks
+  code-quality:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+    
+    - name: Install dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y cmake build-essential libyaml-cpp-dev libgtest-dev libgmock-dev libssl-dev libzstd-dev pkg-config clang-tidy clang-format
+    
+    - name: Configure CMake with clang-tidy
+      run: |
+        mkdir build
+        cd build
+        cmake -DCMAKE_BUILD_TYPE=Debug \
+              -DCMAKE_CXX_CLANG_TIDY=clang-tidy \
+              -DCMAKE_EXPORT_COMPILE_COMMANDS=ON \
+              -DCMAKE_CXX_FLAGS="-Wall -Wextra -Wpedantic" \
+              ..
+    
+    - name: Build with clang-tidy
+      run: |
+        cd build
+        make -j$(nproc) VERBOSE=1
+    
+    - name: Check formatting
+      run: |
+        find src include -name "*.cpp" -o -name "*.hpp" -o -name "*.h" | xargs clang-format --dry-run --Werror
+    
+    - name: Check for TODO/FIXME comments
+      run: |
+        echo "Checking for TODO/FIXME comments in source files..."
+        if grep -r "TODO\|FIXME" src/ include/ --include="*.cpp" --include="*.hpp" --include="*.h"; then
+          echo "Warning: Found TODO/FIXME comments in source files"
+          exit 0  # Don't fail the build, just warn
+        fi
+
+  # Sanitizer builds
+  sanitizers:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        sanitizer: [address, undefined, memory]
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+    
+    - name: Install dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y cmake build-essential libyaml-cpp-dev libgtest-dev libgmock-dev libssl-dev libzstd-dev pkg-config
+    
+    - name: Configure CMake with sanitizer
+      run: |
+        mkdir build
+        cd build
+        cmake -DCMAKE_BUILD_TYPE=Debug \
+              -DCMAKE_CXX_FLAGS="-fsanitize=${{ matrix.sanitizer }} -fno-omit-frame-pointer -Wall -Wextra" \
+              -DCMAKE_C_FLAGS="-fsanitize=${{ matrix.sanitizer }} -fno-omit-frame-pointer -Wall -Wextra" \
+              -DCMAKE_EXE_LINKER_FLAGS="-fsanitize=${{ matrix.sanitizer }}" \
+              -DCMAKE_MODULE_LINKER_FLAGS="-fsanitize=${{ matrix.sanitizer }}" \
+              -DCMAKE_EXPORT_COMPILE_COMMANDS=ON \
+              ..
+    
+    - name: Build with sanitizer
+      run: |
+        cd build
+        make -j$(nproc) VERBOSE=1
+    
+    - name: Run tests with sanitizer
+      run: |
+        cd build
+        ctest --output-on-failure --verbose --timeout 300
+
+  # Coverage report
+  coverage:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+    
+    - name: Install dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y cmake build-essential libyaml-cpp-dev libgtest-dev libgmock-dev libssl-dev libzstd-dev pkg-config lcov
+    
+    - name: Configure CMake with coverage
+      run: |
+        mkdir build
+        cd build
+        cmake -DCMAKE_BUILD_TYPE=Debug \
+              -DCMAKE_CXX_FLAGS="--coverage -Wall -Wextra -Wpedantic" \
+              -DCMAKE_C_FLAGS="--coverage -Wall -Wextra -Wpedantic" \
+              -DCMAKE_EXE_LINKER_FLAGS="--coverage" \
+              -DCMAKE_MODULE_LINKER_FLAGS="--coverage" \
+              -DCMAKE_EXPORT_COMPILE_COMMANDS=ON \
+              ..
+    
+    - name: Build with coverage
+      run: |
+        cd build
+        make -j$(nproc) VERBOSE=1
+    
+    - name: Run tests with coverage
+      run: |
+        cd build
+        ctest --output-on-failure --verbose --timeout 300
+    
+    - name: Generate coverage report
+      run: |
+        cd build
+        lcov --capture --directory . --output-file coverage.info
+        lcov --remove coverage.info '/usr/*' '/opt/*' --output-file coverage.info
+        lcov --list coverage.info
+    
+    - name: Upload coverage to Codecov
+      uses: codecov/codecov-action@v3
+      with:
+        file: ./build/coverage.info
+        flags: unittests
+        name: codecov-umbrella
+        fail_ci_if_error: false
+
+  # Static analysis with cppcheck
+  static-analysis:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+    
+    - name: Install dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y cmake build-essential libyaml-cpp-dev libgtest-dev libgmock-dev libssl-dev libzstd-dev pkg-config cppcheck
+    
+    - name: Run cppcheck
+      run: |
+        cppcheck --enable=all --inconclusive --force --std=c++20 \
+                 --suppress=missingIncludeSystem \
+                 --suppress=unusedFunction \
+                 --suppress=unmatchedSuppression \
+                 src/ include/ 2>&1 | tee cppcheck.log || true
+    
+    - name: Upload cppcheck results
+      uses: actions/upload-artifact@v3
+      if: always()
+      with:
+        name: cppcheck-results
+        path: cppcheck.log
+
+  # Performance testing
+  performance:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+    
+    - name: Install dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y cmake build-essential libyaml-cpp-dev libgtest-dev libgmock-dev libssl-dev libzstd-dev pkg-config
+    
+    - name: Configure CMake for performance
+      run: |
+        mkdir build
+        cd build
+        cmake -DCMAKE_BUILD_TYPE=Release \
+              -DCMAKE_CXX_FLAGS="-O3 -march=native -Wall -Wextra" \
+              -DCMAKE_EXPORT_COMPILE_COMMANDS=ON \
+              ..
+    
+    - name: Build for performance
+      run: |
+        cd build
+        make -j$(nproc) VERBOSE=1
+    
+    - name: Run performance tests
+      run: |
+        cd build
+        # Run tests and measure performance
+        time ctest --output-on-failure --verbose --timeout 300
+        
+        # Run individual performance-sensitive tests
+        for test_exe in statistics_*; do
+          if [ -f "$test_exe" ] && [ -x "$test_exe" ]; then
+            echo "Running performance test: $test_exe"
+            time ./$test_exe
+          fi
+        done

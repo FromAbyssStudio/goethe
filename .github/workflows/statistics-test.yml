@@ -1,0 +1,105 @@
+name: Statistics Tests
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+env:
+  CTEST_OUTPUT_ON_FAILURE: 1
+
+jobs:
+  statistics-test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        compiler: [gcc-12, clang-15]
+        backend: [zstd, null]
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Install dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y cmake build-essential libyaml-cpp-dev libgtest-dev libgmock-dev libssl-dev libzstd-dev pkg-config
+    
+    - name: Set up compiler
+      run: |
+        if [[ "${{ matrix.compiler }}" == gcc-* ]]; then
+          sudo apt-get install -y ${{ matrix.compiler }}
+          echo "CC=gcc" >> $GITHUB_ENV
+          echo "CXX=g++" >> $GITHUB_ENV
+        else
+          sudo apt-get install -y ${{ matrix.compiler }}
+          echo "CC=clang" >> $GITHUB_ENV
+          echo "CXX=clang++" >> $GITHUB_ENV
+        fi
+    
+    - name: Configure CMake
+      run: |
+        mkdir build
+        cd build
+        cmake -DCMAKE_BUILD_TYPE=Debug \
+              -DCMAKE_C_COMPILER=$CC \
+              -DCMAKE_CXX_COMPILER=$CXX \
+              -DCMAKE_CXX_FLAGS="-Wall -Wextra -Wpedantic" \
+              -DCMAKE_EXPORT_COMPILE_COMMANDS=ON \
+              ..
+    
+    - name: Build
+      run: |
+        cd build
+        make -j$(nproc)
+    
+    - name: Run statistics tests
+      run: |
+        cd build
+        echo "Running statistics tests with ${{ matrix.backend }} backend..."
+        
+        # Run the main statistics test
+        if [ -f "simple_statistics_test" ] && [ -x "simple_statistics_test" ]; then
+          echo "Running simple_statistics_test..."
+          ./simple_statistics_test
+        fi
+        
+        # Run the comprehensive statistics test
+        if [ -f "statistics_test" ] && [ -x "statistics_test" ]; then
+          echo "Running statistics_test..."
+          ./statistics_test
+        fi
+        
+        # Run the minimal statistics test
+        if [ -f "minimal_statistics_test" ] && [ -x "minimal_statistics_test" ]; then
+          echo "Running minimal_statistics_test..."
+          ./minimal_statistics_test
+        fi
+        
+        # Run the standalone statistics test
+        if [ -f "standalone_statistics_test" ] && [ -x "standalone_statistics_test" ]; then
+          echo "Running standalone_statistics_test..."
+          ./standalone_statistics_test
+        fi
+    
+    - name: Test statistics tool
+      run: |
+        cd build
+        if [ -f "statistics_tool" ] && [ -x "statistics_tool" ]; then
+          echo "Testing statistics_tool..."
+          ./statistics_tool --help || true
+        fi
+    
+    - name: Run CTest for statistics
+      run: |
+        cd build
+        ctest --output-on-failure --verbose --timeout 300 -R "statistics"
+    
+    - name: Collect test artifacts
+      if: always()
+      uses: actions/upload-artifact@v3
+      with:
+        name: statistics-test-results-${{ matrix.compiler }}-${{ matrix.backend }}
+        path: |
+          build/Testing/
+          build/CMakeFiles/
+        retention-days: 7

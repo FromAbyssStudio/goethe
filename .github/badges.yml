@@ -1,0 +1,18 @@
+# GitHub Actions Badges
+# Add these to your README.md to show CI status
+
+# CI Status Badge
+# ![CI](https://github.com/{owner}/{repo}/workflows/CI/badge.svg)
+
+# C++ Tests Status Badge  
+# ![C++ Tests](https://github.com/{owner}/{repo}/workflows/C++%20Tests/badge.svg)
+
+# Code Coverage Badge (if using Codecov)
+# ![Codecov](https://codecov.io/gh/{owner}/{repo}/branch/main/graph/badge.svg)
+
+# Example README badges section:
+# ## Status
+# 
+# ![CI](https://github.com/{owner}/{repo}/workflows/CI/badge.svg)
+# ![C++ Tests](https://github.com/{owner}/{repo}/workflows/C++%20Tests/badge.svg)
+# ![Codecov](https://codecov.io/gh/{owner}/{repo}/branch/main/graph/badge.svg)

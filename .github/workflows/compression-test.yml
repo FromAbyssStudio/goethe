@@ -1,0 +1,122 @@
+name: Compression Tests
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+env:
+  CTEST_OUTPUT_ON_FAILURE: 1
+
+jobs:
+  compression-test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        compiler: [gcc-12, clang-15]
+        backend: [zstd, null]
+        build-type: [Debug, Release]
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Install dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y cmake build-essential libyaml-cpp-dev libgtest-dev libgmock-dev libssl-dev libzstd-dev pkg-config
+    
+    - name: Set up compiler
+      run: |
+        if [[ "${{ matrix.compiler }}" == gcc-* ]]; then
+          sudo apt-get install -y ${{ matrix.compiler }}
+          echo "CC=gcc" >> $GITHUB_ENV
+          echo "CXX=g++" >> $GITHUB_ENV
+        else
+          sudo apt-get install -y ${{ matrix.compiler }}
+          echo "CC=clang" >> $GITHUB_ENV
+          echo "CXX=clang++" >> $GITHUB_ENV
+        fi
+    
+    - name: Configure CMake
+      run: |
+        mkdir build
+        cd build
+        cmake -DCMAKE_BUILD_TYPE=${{ matrix.build-type }} \
+              -DCMAKE_C_COMPILER=$CC \
+              -DCMAKE_CXX_COMPILER=$CXX \
+              -DCMAKE_CXX_FLAGS="-Wall -Wextra -Wpedantic" \
+              -DCMAKE_EXPORT_COMPILE_COMMANDS=ON \
+              ..
+    
+    - name: Build
+      run: |
+        cd build
+        make -j$(nproc)
+    
+    - name: Run compression tests
+      run: |
+        cd build
+        echo "Running compression tests with ${{ matrix.backend }} backend..."
+        
+        # Run the minimal compression test
+        if [ -f "minimal_compression_test" ] && [ -x "minimal_compression_test" ]; then
+          echo "Running minimal_compression_test..."
+          ./minimal_compression_test
+        fi
+        
+        # Run the comprehensive compression test
+        if [ -f "test_compression" ] && [ -x "test_compression" ]; then
+          echo "Running test_compression..."
+          ./test_compression
+        fi
+    
+    - name: Test compression with different data types
+      run: |
+        cd build
+        echo "Testing compression with various data types..."
+        
+        # Create test data files
+        echo "This is a test string for compression testing." > test_data.txt
+        echo "This string contains repeated patterns that should compress well." >> test_data.txt
+        echo "This string contains repeated patterns that should compress well." >> test_data.txt
+        echo "This string contains repeated patterns that should compress well." >> test_data.txt
+        
+        # Test with the statistics test (which includes compression)
+        if [ -f "simple_statistics_test" ] && [ -x "simple_statistics_test" ]; then
+          echo "Running simple_statistics_test (includes compression testing)..."
+          ./simple_statistics_test
+        fi
+    
+    - name: Run CTest for compression
+      run: |
+        cd build
+        ctest --output-on-failure --verbose --timeout 300 -R "compression"
+    
+    - name: Test compression performance
+      if: matrix.build-type == 'Release'
+      run: |
+        cd build
+        echo "Testing compression performance..."
+        
+        # Create a larger test file for performance testing
+        for i in {1..1000}; do
+          echo "This is line $i with some repeated content that should compress well." >> performance_test.txt
+        done
+        
+        # Test compression performance
+        if [ -f "simple_statistics_test" ] && [ -x "simple_statistics_test" ]; then
+          echo "Running performance test..."
+          time ./simple_statistics_test
+        fi
+    
+    - name: Collect test artifacts
+      if: always()
+      uses: actions/upload-artifact@v3
+      with:
+        name: compression-test-results-${{ matrix.compiler }}-${{ matrix.backend }}-${{ matrix.build-type }}
+        path: |
+          build/Testing/
+          build/CMakeFiles/
+          test_data.txt
+          performance_test.txt
+        retention-days: 7

@@ -1,0 +1,54 @@
+name: SDL3 Integration Test
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:  # Allow manual triggering
+
+jobs:
+  sdl3-test:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Install SDL3 and dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y cmake build-essential libyaml-cpp-dev libgtest-dev libgmock-dev libssl-dev libzstd-dev pkg-config
+        
+        # Install SDL3 from source (since it's not widely available in package managers yet)
+        git clone https://github.com/libsdl-org/SDL.git
+        cd SDL
+        mkdir build && cd build
+        cmake -DSDL_SHARED=ON -DSDL_STATIC=OFF -DSDL_TEST=OFF ..
+        make -j$(nproc)
+        sudo make install
+        sudo ldconfig
+        cd ../..
+    
+    - name: Configure CMake with SDL3
+      run: |
+        mkdir build
+        cd build
+        cmake -DCMAKE_BUILD_TYPE=Debug -DCMAKE_PREFIX_PATH=/usr/local ..
+    
+    - name: Build with SDL3
+      run: |
+        cd build
+        make -j$(nproc)
+    
+    - name: Run tests
+      run: |
+        cd build
+        ctest --output-on-failure --verbose
+    
+    - name: Check SDL3 linking
+      run: |
+        cd build
+        # Check if SDL3 symbols are properly linked
+        if command -v nm &> /dev/null; then
+          echo "Checking for SDL3 symbols in built libraries..."
+          find . -name "*.so" -o -name "*.a" | xargs -I {} sh -c 'echo "=== {} ==="; nm -D {} 2>/dev/null | grep -i sdl || echo "No SDL symbols found"'
+        fi

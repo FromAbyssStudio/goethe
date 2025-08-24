@@ -1,0 +1,504 @@
+# YAML Schema for GOETHE Dialogue Format
+# This schema defines the structure for the GOETHE dialogue system
+
+kind:
+  type: string
+  description: "Type of document - must be 'dialogue'"
+  required: true
+  enum: ["dialogue"]
+
+id:
+  type: string
+  description: "Unique identifier for the dialogue"
+  required: true
+
+metadata:
+  type: object
+  description: "Optional metadata for the dialogue"
+  required: false
+  additionalProperties: true
+
+startNode:
+  type: string
+  description: "ID of the starting node (optional, defaults to first node)"
+  required: false
+
+nodes:
+  type: array
+  description: "Array of dialogue nodes"
+  required: true
+  items:
+    type: object
+    properties:
+      id:
+        type: string
+        description: "Unique identifier for this node"
+        required: true
+      
+      speaker:
+        type: string
+        description: "Entity ID of the speaker"
+        required: false
+      
+      tags:
+        type: array
+        description: "Tags for content filtering (e.g., [violent, spoiler])"
+        required: false
+        items:
+          type: string
+      
+      # Line content (single or variants)
+      line:
+        type: object
+        description: "Single line content (use this OR lines array)"
+        required: false
+        properties:
+          text:
+            type: string
+            description: "i18n key for the line text"
+            required: true
+          
+          voice:
+            type: object
+            description: "Voice/audio metadata"
+            required: false
+            properties:
+              clipId:
+                type: string
+                description: "Voice clip identifier"
+                required: true
+              subtitles:
+                type: boolean
+                description: "Whether to show subtitles"
+                required: false
+                default: true
+              startMs:
+                type: integer
+                description: "Start time in milliseconds"
+                required: false
+                default: 0
+          
+          portrait:
+            type: object
+            description: "Portrait metadata"
+            required: false
+            properties:
+              id:
+                type: string
+                description: "Portrait identifier"
+                required: true
+              mood:
+                type: string
+                description: "Portrait mood/expression"
+                required: false
+          
+          sfx:
+            type: array
+            description: "Sound effects to play"
+            required: false
+            items:
+              type: string
+          
+          params:
+            type: object
+            description: "i18n interpolation parameters"
+            required: false
+            additionalProperties: true
+          
+          conditions:
+            type: object
+            description: "Conditions for this line to be shown"
+            required: false
+            # Condition structure defined below
+          
+          weight:
+            type: number
+            description: "Weight for weighted variants (default: 1.0)"
+            required: false
+            default: 1.0
+            minimum: 0.0
+      
+      lines:
+        type: array
+        description: "Weighted line variants (use this OR single line)"
+        required: false
+        items:
+          $ref: "#/definitions/line"
+      
+      choices:
+        type: array
+        description: "Available choices for this node"
+        required: false
+        items:
+          type: object
+          properties:
+            id:
+              type: string
+              description: "Unique identifier for this choice"
+              required: true
+            
+            text:
+              type: string
+              description: "i18n key for the choice text"
+              required: true
+            
+            to:
+              type: string
+              description: "Target node ID or '$END' to end dialogue"
+              required: true
+            
+            conditions:
+              type: object
+              description: "Conditions for this choice to be available"
+              required: false
+              # Condition structure defined below
+            
+            effects:
+              type: array
+              description: "Effects to apply when this choice is selected"
+              required: false
+              items:
+                $ref: "#/definitions/effect"
+            
+            once:
+              type: boolean
+              description: "Auto-hide after chosen"
+              required: false
+              default: false
+            
+            cooldownMs:
+              type: integer
+              description: "Resurfaces after time in milliseconds"
+              required: false
+              default: 0
+              minimum: 0
+            
+            disabledText:
+              type: string
+              description: "i18n key for disabled choice text"
+              required: false
+      
+      onEnter:
+        type: object
+        description: "Effects to apply when entering this node"
+        required: false
+        properties:
+          effects:
+            type: array
+            items:
+              $ref: "#/definitions/effect"
+      
+      onExit:
+        type: object
+        description: "Effects to apply when exiting this node"
+        required: false
+        properties:
+          effects:
+            type: array
+            items:
+              $ref: "#/definitions/effect"
+      
+      autoAdvance:
+        type: object
+        description: "Auto-advance configuration (if no choices)"
+        required: false
+        properties:
+          ms:
+            type: integer
+            description: "Time in milliseconds before auto-advancing"
+            required: true
+            minimum: 0
+      
+      interruptible:
+        type: boolean
+        description: "Whether this node can be interrupted"
+        required: false
+        default: true
+
+# Condition system (same grammar as Regent)
+definitions:
+  condition:
+    type: object
+    description: "Condition for gating content"
+    oneOf:
+      # Combinators
+      - type: object
+        properties:
+          all:
+            type: array
+            items:
+              $ref: "#/definitions/condition"
+        required: ["all"]
+        additionalProperties: false
+      
+      - type: object
+        properties:
+          any:
+            type: array
+            items:
+              $ref: "#/definitions/condition"
+        required: ["any"]
+        additionalProperties: false
+      
+      - type: object
+        properties:
+          not:
+            $ref: "#/definitions/condition"
+        required: ["not"]
+        additionalProperties: false
+      
+      # Leaf conditions
+      - type: object
+        properties:
+          flag:
+            type: string
+        required: ["flag"]
+        additionalProperties: false
+      
+      - type: object
+        properties:
+          var:
+            type: object
+            properties:
+              name:
+                type: string
+              value:
+                oneOf:
+                  - type: string
+                  - type: number
+                  - type: boolean
+        required: ["var"]
+        additionalProperties: false
+      
+      - type: object
+        properties:
+          questState:
+            type: object
+            properties:
+              questId:
+                type: string
+              state:
+                type: string
+                enum: ["not_started", "active", "completed", "failed"]
+        required: ["questState"]
+        additionalProperties: false
+      
+      - type: object
+        properties:
+          choiceMade:
+            type: object
+            properties:
+              dialogueId:
+                type: string
+              choiceId:
+                type: string
+        required: ["choiceMade"]
+        additionalProperties: false
+      
+      - type: object
+        properties:
+          timeSince:
+            type: object
+            properties:
+              event:
+                type: string
+              ms:
+                type: integer
+        required: ["timeSince"]
+        additionalProperties: false
+
+  effect:
+    type: object
+    description: "Effect to apply"
+    oneOf:
+      - type: object
+        properties:
+          setFlag:
+            type: string
+        required: ["setFlag"]
+        additionalProperties: false
+      
+      - type: object
+        properties:
+          setVar:
+            type: object
+            properties:
+              name:
+                type: string
+              value:
+                oneOf:
+                  - type: string
+                  - type: number
+                  - type: boolean
+        required: ["setVar"]
+        additionalProperties: false
+      
+      - type: object
+        properties:
+          quest.add:
+            type: string
+        required: ["quest.add"]
+        additionalProperties: false
+      
+      - type: object
+        properties:
+          quest.complete:
+            type: string
+        required: ["quest.complete"]
+        additionalProperties: false
+      
+      - type: object
+        properties:
+          notify:
+            type: object
+            properties:
+              title:
+                type: string
+              body:
+                type: string
+              params:
+                type: object
+                additionalProperties: true
+        required: ["notify"]
+        additionalProperties: false
+      
+      - type: object
+        properties:
+          playSfx:
+            type: string
+        required: ["playSfx"]
+        additionalProperties: false
+      
+      - type: object
+        properties:
+          playMusic:
+            type: string
+        required: ["playMusic"]
+        additionalProperties: false
+      
+      - type: object
+        properties:
+          teleport:
+            type: object
+            properties:
+              area:
+                type: string
+              x:
+                type: number
+              y:
+                type: number
+        required: ["teleport"]
+        additionalProperties: false
+
+  line:
+    type: object
+    description: "Line content structure"
+    properties:
+      text:
+        type: string
+        description: "i18n key for the line text"
+        required: true
+      
+      voice:
+        type: object
+        description: "Voice/audio metadata"
+        required: false
+        properties:
+          clipId:
+            type: string
+            description: "Voice clip identifier"
+            required: true
+          subtitles:
+            type: boolean
+            description: "Whether to show subtitles"
+            required: false
+            default: true
+          startMs:
+            type: integer
+            description: "Start time in milliseconds"
+            required: false
+            default: 0
+      
+      portrait:
+        type: object
+        description: "Portrait metadata"
+        required: false
+        properties:
+          id:
+            type: string
+            description: "Portrait identifier"
+            required: true
+          mood:
+            type: string
+            description: "Portrait mood/expression"
+            required: false
+      
+      sfx:
+        type: array
+        description: "Sound effects to play"
+        required: false
+        items:
+          type: string
+      
+      params:
+        type: object
+        description: "i18n interpolation parameters"
+        required: false
+        additionalProperties: true
+      
+      conditions:
+        $ref: "#/definitions/condition"
+      
+      weight:
+        type: number
+        description: "Weight for weighted variants (default: 1.0)"
+        required: false
+        default: 1.0
+        minimum: 0.0
+
+# Example usage:
+example: |
+  kind: dialogue
+  id: dlg_marshal
+  startNode: intro
+  
+  nodes:
+    - id: intro
+      speaker: marshal
+      line:
+        text: dlg_marshal.intro.text
+        portrait: { id: marshal, mood: neutral }
+        voice: { clipId: vo_marshal_intro }
+      choices:
+        - id: accept_help
+          text: dlg_marshal.intro.choice.accept
+          to: agree
+          effects:
+            - setFlag: accepted_president_help
+            - quest.add: help_president
+        - id: refuse_help
+          text: dlg_marshal.intro.choice.refuse
+          to: farewell
+    
+    - id: agree
+      lines:
+        - text: dlg_marshal.agree.v1
+          weight: 2
+        - text: dlg_marshal.agree.v2
+          weight: 1
+      autoAdvance: { ms: 500 }
+      onExit:
+        effects:
+          - notify: { title: phrase_notify_title, body: phrase_quest_done, params: { title: quest.help_president.title } }
+      choices:
+        - id: proceed
+          text: dlg_common.continue
+          to: $END
+    
+    - id: farewell
+      line:
+        text: dlg_marshal.farewell
+      choices:
+        - id: close
+          text: dlg_common.close
+          to: $END
