@@ -74,11 +74,11 @@ fi
 print_status "Running comprehensive build tests..."
 
 # Create build directory if it doesn't exist
-if [ ! -d "buil" ]; then
-    mkdir -p buil
+if [ ! -d "build" ]; then
+    mkdir -p build
 fi
 
-cd buil
+cd build
 
 # Test Debug build
 print_status "Testing Debug build..."
@@ -144,7 +144,7 @@ fi
 
 # Check for missing includes
 print_status "Checking for missing includes..."
-cd buil
+cd build
 if [ -f "compile_commands.json" ]; then
     # This is a basic check - in a real scenario you might want more sophisticated include checking
     print_success "Compilation database generated"

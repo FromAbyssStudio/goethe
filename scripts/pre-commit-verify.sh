@@ -38,9 +38,9 @@ if [ ! -f "CMakeLists.txt" ]; then
 fi
 
 # Create build directory if it doesn't exist
-if [ ! -d "buil" ]; then
+if [ ! -d "build" ]; then
     print_status "Creating build directory..."
-    mkdir -p buil
+    mkdir -p build
 fi
 
 # Step 1: Check code formatting
@@ -59,7 +59,7 @@ fi
 
 # Step 2: Configure and build
 print_status "Configuring CMake..."
-cd buil
+cd build
 cmake -DCMAKE_BUILD_TYPE=Debug \
       -DCMAKE_CXX_FLAGS="-Wall -Wextra -Wpedantic" \
       -DCMAKE_EXPORT_COMPILE_COMMANDS=ON \
