@@ -162,16 +162,16 @@ endif()
 # Test executables
 if(GTest_FOUND)
   # Google Test based tests
-  add_executable(test_basic src/tests/test_basic.cpp)
+  add_executable(test_basic ${CMAKE_CURRENT_SOURCE_DIR}/src/tests/test_basic.cpp)
   target_link_libraries(test_basic PRIVATE GTest::gtest GTest::gmock)
   
-  add_executable(test_dialog src/tests/test_dialog.cpp)
+  add_executable(test_dialog ${CMAKE_CURRENT_SOURCE_DIR}/src/tests/test_dialog.cpp)
   target_link_libraries(test_dialog PRIVATE goethe_dialog GTest::gtest GTest::gmock)
   
-  add_executable(test_compression src/tests/test_compression.cpp)
+  add_executable(test_compression ${CMAKE_CURRENT_SOURCE_DIR}/src/tests/test_compression.cpp)
   target_link_libraries(test_compression PRIVATE goethe_dialog GTest::gtest GTest::gmock)
   
-  add_executable(minimal_compression_test src/tests/minimal_compression_test.cpp)
+  add_executable(minimal_compression_test ${CMAKE_CURRENT_SOURCE_DIR}/src/tests/minimal_compression_test.cpp)
   target_link_libraries(minimal_compression_test PRIVATE GTest::gtest GTest::gmock)
   
   # Add tests to CTest
@@ -199,19 +199,19 @@ if(GTest_FOUND)
   )
 else()
   # Fallback simple test (without gtest)
-  add_executable(simple_test src/tests/simple_test.cpp)
+  add_executable(simple_test ${CMAKE_CURRENT_SOURCE_DIR}/src/tests/simple_test.cpp)
   target_link_libraries(simple_test PRIVATE goethe_dialog)
   
   # Statistics test
-  add_executable(statistics_test src/tests/statistics_test.cpp)
+  add_executable(statistics_test ${CMAKE_CURRENT_SOURCE_DIR}/src/tests/statistics_test.cpp)
   target_link_libraries(statistics_test PRIVATE goethe_dialog)
   
   # Simple statistics test
-  add_executable(simple_statistics_test src/tests/simple_statistics_test.cpp)
+  add_executable(simple_statistics_test ${CMAKE_CURRENT_SOURCE_DIR}/src/tests/simple_statistics_test.cpp)
   target_link_libraries(simple_statistics_test PRIVATE goethe_dialog)
   
   # Minimal statistics test
-  add_executable(minimal_statistics_test src/tests/minimal_statistics_test.cpp)
+  add_executable(minimal_statistics_test ${CMAKE_CURRENT_SOURCE_DIR}/src/tests/minimal_statistics_test.cpp)
   target_link_libraries(minimal_statistics_test PRIVATE goethe_dialog)
 endif()
 
@@ -224,7 +224,7 @@ endif()
 # target_link_libraries(gdkg_tool PRIVATE goethe_dialog)
 
 # Statistics tool executable
-add_executable(statistics_tool src/tools/statistics_tool.cpp)
+add_executable(statistics_tool ${CMAKE_CURRENT_SOURCE_DIR}/src/tools/statistics_tool.cpp)
 target_link_libraries(statistics_tool PRIVATE goethe_dialog)
 
 # Install rules for goethe_dialog
