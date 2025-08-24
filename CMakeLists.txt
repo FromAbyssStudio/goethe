@@ -292,3 +292,24 @@ add_custom_target(distclean
 )
 
 
+# --- Tests (GoogleTest + CTest) ---
+if(GOETHE_BUILD_TESTS)
+  include(CTest)
+  enable_testing()
+
+  include(FetchContent)
+  # Use a stable, modern release of GoogleTest
+  FetchContent_Declare(
+    googletest
+    GIT_REPOSITORY https://github.com/google/googletest.git
+    GIT_TAG v1.14.0
+  )
+  # Do not install gtest when installing this project
+  set(INSTALL_GTEST OFF CACHE BOOL "" FORCE)
+  set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
+  FetchContent_MakeAvailable(googletest)
+
+  add_subdirectory(tests)
+endif()
+
+
