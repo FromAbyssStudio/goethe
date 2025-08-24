@@ -36,7 +36,22 @@ else()
 endif()
 
 # Find yaml-cpp (required for dialog module)
-find_package(yaml-cpp REQUIRED)
+find_package(yaml-cpp QUIET)
+if(NOT yaml-cpp_FOUND)
+  message(STATUS "yaml-cpp not found via find_package, trying pkg-config")
+  find_package(PkgConfig QUIET)
+  if(PkgConfig_FOUND)
+    pkg_check_modules(YAML_CPP QUIET yaml-cpp)
+    if(YAML_CPP_FOUND)
+      message(STATUS "Found yaml-cpp via pkg-config: ${YAML_CPP_VERSION}")
+      set(yaml-cpp_FOUND TRUE)
+    endif()
+  endif()
+endif()
+
+if(NOT yaml-cpp_FOUND)
+  message(FATAL_ERROR "yaml-cpp is required but not found. Please install yaml-cpp.")
+endif()
 
 # Find zstd (optional for compression)
 find_package(PkgConfig QUIET)
@@ -127,7 +142,17 @@ target_include_directories(goethe_dialog
 )
 
 # Link yaml-cpp
-target_link_libraries(goethe_dialog PUBLIC yaml-cpp)
+if(yaml-cpp_FOUND)
+  if(YAML_CPP_FOUND)
+    # Found via pkg-config
+    target_link_libraries(goethe_dialog PUBLIC ${YAML_CPP_LIBRARIES})
+    target_include_directories(goethe_dialog PRIVATE ${YAML_CPP_INCLUDE_DIRS})
+    target_compile_options(goethe_dialog PRIVATE ${YAML_CPP_CFLAGS_OTHER})
+  else()
+    # Found via find_package
+    target_link_libraries(goethe_dialog PUBLIC yaml-cpp)
+  endif()
+endif()
 
 # Link zstd if available
 if(ZSTD_FOUND)
