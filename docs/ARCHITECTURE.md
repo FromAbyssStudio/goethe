@@ -2,10 +2,11 @@
 
 ## Overview
 
-The Goethe Dialog System is built with a modular, extensible architecture that separates concerns and provides multiple levels of abstraction. The system consists of two main components:
+The Goethe Dialog System is built with a modular, extensible architecture that separates concerns and provides multiple levels of abstraction. The system consists of three main components:
 
-1. **Dialog System**: Handles YAML-based dialog loading, parsing, and manipulation
+1. **Dialog System**: Handles YAML-based dialog loading, parsing, and manipulation with advanced features
 2. **Compression System**: Provides flexible compression with multiple backend implementations
+3. **Statistics System**: Real-time performance monitoring and analysis
 
 ## Architecture Principles
 
@@ -17,13 +18,15 @@ The system uses several design patterns to achieve flexibility and maintainabili
 2. **Factory Pattern**: For creating compression backends
 3. **Manager Pattern**: For high-level API access
 4. **Singleton Pattern**: For global manager instances
+5. **Observer Pattern**: For statistics tracking
 
 ### Separation of Concerns
 
 - **Interface Layer**: Public headers in `include/goethe/`
 - **Implementation Layer**: Source files in `src/engine/`
 - **API Layer**: C and C++ APIs for different use cases
-- **Test Layer**: Test files in `src/tests/`
+- **Test Layer**: Comprehensive test suite in `src/tests/`
+- **Tool Layer**: Command-line tools in `src/tools/`
 
 ## Dialog System Architecture
 
@@ -31,20 +34,27 @@ The system uses several design patterns to achieve flexibility and maintainabili
 
 ```
 Dialog System
-├── DialogueLine          # Individual dialog line
 ├── Dialogue              # Complete dialog structure
-├── read_dialog()         # YAML loading function
-├── write_dialog()        # YAML writing function
+├── Node                  # Individual dialog node
+├── Line                  # Dialog line with metadata
+├── Choice                # Player choice definition
+├── Condition             # Conditional logic system
+├── Effect                # Effect system for game state
+├── Voice                 # Audio metadata
+├── Portrait              # Visual metadata
+├── read_dialogue()       # YAML loading function
+├── write_dialogue()      # YAML writing function
 └── C API Wrapper         # C-compatible interface
 ```
 
 ### Data Flow
 
-1. **Input**: YAML file or string
+1. **Input**: YAML file or string (simple or advanced format)
 2. **Parsing**: YAML-cpp library parses the input
 3. **Conversion**: YAML nodes converted to C++ structures
-4. **Access**: Dialog data accessed via C++ or C APIs
-5. **Output**: Dialog data serialized back to YAML
+4. **Validation**: Schema validation and error checking
+5. **Access**: Dialog data accessed via C++ or C APIs
+6. **Output**: Dialog data serialized back to YAML
 
 ### YAML Integration
 
@@ -52,7 +62,45 @@ The dialog system uses yaml-cpp for YAML processing:
 
 - **Loading**: `YAML::Load()` for parsing YAML input
 - **Conversion**: Custom `from_yaml()` and `to_yaml()` functions
+- **Validation**: Schema-based validation for advanced format
 - **Serialization**: `YAML::Dump()` for output generation
+
+### Advanced Features
+
+#### Conditional Logic System
+
+```cpp
+struct Condition {
+    enum class Type {
+        ALL, ANY, NOT,
+        FLAG, VAR, QUEST_STATE, OBJECTIVE_STATE,
+        CHAPTER_ACTIVE, AREA_ENTERED, DIALOGUE_VISITED,
+        CHOICE_MADE, EVENT, TIME_SINCE, INVENTORY_HAS,
+        DOOR_LOCKED, ACCESS_ALLOWED
+    };
+    
+    Type type;
+    std::string key;
+    std::variant<std::string, int, float, bool> value;
+    std::vector<Condition> children; // For ALL/ANY/NOT combinators
+};
+```
+
+#### Effect System
+
+```cpp
+struct Effect {
+    enum class Type {
+        SET_FLAG, SET_VAR, QUEST_ADD, QUEST_COMPLETE,
+        NOTIFY, PLAY_SFX, PLAY_MUSIC, TELEPORT
+    };
+    
+    Type type;
+    std::string target;
+    std::variant<std::string, int, float, bool> value;
+    std::map<std::string, std::string> params;
+};
+```
 
 ## Compression System Architecture
 
@@ -64,6 +112,7 @@ Compression System
 ├── CompressionFactory    # Backend creation
 ├── CompressionManager    # High-level API
 ├── Backend Registry      # Automatic registration
+├── Statistics Integration # Performance tracking
 └── Implementations       # Concrete backends
     ├── NullBackend       # No-op compression
     └── ZstdBackend       # Zstd compression
@@ -76,10 +125,12 @@ Compression System
 ```cpp
 class CompressionBackend {
 public:
-    virtual std::vector<uint8_t> compress(const uint8_t* data, std::size_t size) = 0;
-    virtual std::vector<uint8_t> decompress(const uint8_t* data, std::size_t size) = 0;
+    virtual std::vector<uint8_t> compress(const std::vector<uint8_t>& data) = 0;
+    virtual std::vector<uint8_t> decompress(const std::vector<uint8_t>& data) = 0;
     virtual std::string name() const = 0;
+    virtual std::string version() const = 0;
     virtual bool is_available() const = 0;
+    virtual void set_compression_level(int level) = 0;
 };
 ```
 
@@ -92,6 +143,7 @@ public:
     void register_backend(const std::string& name, BackendCreator creator);
     std::unique_ptr<CompressionBackend> create_backend(const std::string& name);
     std::unique_ptr<CompressionBackend> create_best_backend();
+    std::vector<std::string> get_available_backends();
 };
 ```
 
@@ -101,189 +153,223 @@ public:
 class CompressionManager {
 public:
     static CompressionManager& instance();
-    void initialize(const std::string& backend_name = "");
-    std::vector<uint8_t> compress(const uint8_t* data, std::size_t size);
-    std::vector<uint8_t> decompress(const uint8_t* data, std::size_t size);
+    void initialize(const std::string& backend_name = "auto");
+    std::vector<uint8_t> compress(const std::vector<uint8_t>& data);
+    std::vector<uint8_t> decompress(const std::vector<uint8_t>& data);
+    void switch_backend(const std::string& backend_name);
+    std::string get_current_backend() const;
 };
 ```
 
-### Backend Selection Strategy
+## Statistics System Architecture
 
-The system implements a priority-based backend selection:
+### Core Components
 
-1. **Zstd**: Best compression ratio and speed
-2. **Null**: Fallback for testing or when no compression is needed
+```
+Statistics System
+├── StatisticsManager     # Global statistics manager
+├── BackendStats          # Per-backend statistics
+├── OperationStats        # Individual operation metrics
+├── Performance Metrics   # Calculated performance data
+└── Analysis Tools        # Command-line analysis tools
+```
 
-### Registration System
+### Design Patterns Implementation
 
-Backends are automatically registered at startup:
+#### Observer Pattern
 
 ```cpp
-void register_compression_backends() {
-    auto& factory = CompressionFactory::instance();
-    
-    // Register null backend (always available)
-    factory.register_backend("null", []() {
-        return std::make_unique<NullCompressionBackend>();
-    });
-    
-    // Register zstd backend (if available)
-    factory.register_backend("zstd", []() {
-        return std::make_unique<ZstdCompressionBackend>();
-    });
-}
-```
-
-## API Design
-
-### C++ API
-
-The C++ API provides high-level, type-safe access:
-
-```cpp
-// Dialog API
-goethe::Dialogue dialog = goethe::read_dialog(file);
-for (const auto& line : dialog.lines) {
-    // Process dialog line
-}
-
-// Compression API
-auto& manager = goethe::CompressionManager::instance();
-manager.initialize("zstd");
-auto compressed = manager.compress(data);
-```
-
-### C API
-
-The C API provides C-compatible interface for integration:
-
-```c
-// Dialog API
-GoetheDialog* dialog = goethe_dialog_create();
-goethe_dialog_load_from_file(dialog, "dialog.yaml");
-GoetheDialogLine* line = goethe_dialog_get_line(dialog, 0);
-
-// Compression API
-char* compressed = goethe_compress_data(data, size, "zstd");
-```
-
-## Error Handling
-
-### Exception-Based (C++)
-
-C++ code uses exceptions for error handling:
-
-```cpp
-try {
-    auto backend = CompressionFactory::instance().create_backend("zstd");
-    auto compressed = backend->compress(data, size);
-} catch (const CompressionError& e) {
-    // Handle compression error
-}
-```
-
-### Return Code-Based (C)
-
-C code uses return codes for error handling:
-
-```c
-int result = goethe_dialog_load_from_file(dialog, "dialog.yaml");
-if (result != 0) {
-    // Handle error
-}
-```
-
-## Memory Management
-
-### RAII (C++)
-
-C++ code uses RAII for automatic resource management:
-
-```cpp
-class ZstdCompressionBackend {
-private:
-    std::unique_ptr<ZSTD_CCtx_s> cctx_;
-    std::unique_ptr<ZSTD_DCtx_s> dctx_;
+class StatisticsManager {
 public:
-    ~ZstdCompressionBackend() {
-        // Automatic cleanup via unique_ptr
-    }
+    static StatisticsManager& instance();
+    void enable_statistics(bool enable = true);
+    bool is_statistics_enabled() const;
+    
+    // Record operations (called automatically by compression system)
+    void record_compression(const std::string& backend_name, 
+                          const std::string& backend_version,
+                          const OperationStats& stats);
+    void record_decompression(const std::string& backend_name, 
+                            const std::string& backend_version,
+                            const OperationStats& stats);
+    
+    // Get statistics
+    BackendStats get_backend_stats(const std::string& backend_name) const;
+    std::vector<std::string> get_backend_names() const;
+    BackendStats get_global_stats() const;
 };
 ```
 
-### Manual Management (C)
+### Performance Metrics
 
-C code requires manual memory management:
-
-```c
-GoetheDialog* dialog = goethe_dialog_create();
-// Use dialog
-goethe_dialog_destroy(dialog); // Manual cleanup
+```cpp
+struct OperationStats {
+    std::size_t input_size = 0;      // Input data size in bytes
+    std::size_t output_size = 0;     // Output data size in bytes
+    Duration duration{};              // Operation duration
+    bool success = false;             // Whether operation succeeded
+    std::string error_message;       // Error message if failed
+    
+    // Calculated metrics
+    double compression_ratio() const;     // output_size / input_size
+    double compression_rate() const;      // (1.0 - compression_ratio()) * 100.0
+    double throughput_mbps() const;       // Throughput in MB/s
+    double throughput_mibps() const;      // Throughput in MiB/s
+};
 ```
+
+### Thread Safety
+
+The statistics system is designed for concurrent access:
+
+- **Atomic Operations**: All counters use `std::atomic`
+- **Lock-free Design**: No mutexes for performance
+- **Memory Ordering**: Appropriate memory ordering for consistency
+
+## Testing Architecture
+
+### Test Organization
+
+```
+Test Suite
+├── Unit Tests            # Individual component tests
+│   ├── test_dialog.cpp   # Dialog system tests
+│   ├── test_compression.cpp # Compression system tests
+│   └── statistics_test.cpp # Statistics system tests
+├── Integration Tests     # Component interaction tests
+│   ├── test_basic.cpp    # Basic functionality tests
+│   └── simple_test.cpp   # Simple integration test
+└── Minimal Tests         # Quick validation tests
+    ├── minimal_compression_test.cpp
+    ├── minimal_statistics_test.cpp
+    └── simple_statistics_test.cpp
+```
+
+### Testing Framework
+
+- **Google Test**: Professional testing framework
+- **GMock**: Mocking support for testing
+- **Test Fixtures**: Reusable test components
+- **Parameterized Tests**: Multiple test scenarios
+- **Death Tests**: Error condition testing
+
+### Test Coverage
+
+- **Dialog System**: YAML parsing, validation, serialization
+- **Compression System**: All backends, error handling, performance
+- **Statistics System**: Metrics calculation, thread safety
+- **Integration**: End-to-end functionality
+- **Error Handling**: Exception safety, error conditions
+
+## Tool Architecture
+
+### Command-Line Tools
+
+```
+Tools
+├── statistics_tool       # Performance analysis tool
+│   ├── Summary reports   # Overview statistics
+│   ├── Detailed analysis # Per-backend metrics
+│   ├── Export functionality # Data export
+│   └── Filtering options # Selective analysis
+└── gdkg_tool            # Package management tool
+    ├── Package creation  # Create compressed packages
+    ├── Package extraction # Extract packages
+    ├── Package listing   # List contents
+    └── Validation       # Package integrity checks
+```
+
+### Tool Design Principles
+
+- **Modular Design**: Each tool is independent
+- **Command-Line Interface**: Consistent CLI design
+- **Error Handling**: Comprehensive error reporting
+- **Output Formats**: Multiple output formats (text, JSON)
+- **Configuration**: Configurable behavior
+
+## Build System Architecture
+
+### CMake Configuration
+
+```
+Build System
+├── Dependency Detection  # Automatic library detection
+├── Feature Flags        # Optional feature control
+├── Compiler Selection   # Clang/GCC preference
+├── Platform Support     # Cross-platform compatibility
+└── Installation        # Package installation
+```
+
+### Build Features
+
+- **Optional Dependencies**: Graceful degradation
+- **Cross-Platform**: Linux, Windows, macOS
+- **Compiler Optimization**: Automatic optimization
+- **Debug Support**: Debug builds and symbols
+- **Installation**: System-wide installation
+
+## Integration Points
+
+### External Dependencies
+
+- **yaml-cpp**: YAML parsing and serialization
+- **zstd**: High-performance compression
+- **OpenSSL**: Package encryption and signing
+- **Google Test**: Testing framework
+
+### API Design
+
+- **C++ API**: Modern C++ with RAII and exceptions
+- **C API**: C-compatible interface for C applications
+- **Header-Only**: Minimal external dependencies
+- **Versioning**: API versioning and compatibility
 
 ## Performance Considerations
 
-### Compression Performance
+### Optimization Strategies
 
-- **Zstd**: Optimized for speed and compression ratio
-- **Null**: Minimal overhead for testing
-- **Context Reuse**: Compression contexts are reused for efficiency
+- **Zero-Copy**: Minimize data copying
+- **Memory Pooling**: Efficient memory management
+- **Lazy Loading**: On-demand resource loading
+- **Caching**: Intelligent caching strategies
+- **Parallel Processing**: Multi-threaded operations
 
-### Memory Usage
+### Monitoring
 
-- **Streaming**: Large files processed in chunks
-- **Buffer Management**: Efficient buffer allocation and deallocation
-- **Zero-Copy**: Minimize data copying where possible
+- **Real-time Metrics**: Live performance data
+- **Resource Usage**: Memory and CPU monitoring
+- **Bottleneck Detection**: Performance analysis
+- **Optimization Guidance**: Performance recommendations
 
 ## Extensibility
 
-### Adding New Compression Backends
+### Adding New Features
 
-1. Implement the `CompressionBackend` interface
-2. Add registration in `register_compression_backends()`
-3. Update priority list in `CompressionFactory`
-4. Add tests for the new backend
+1. **Compression Backends**: Implement `CompressionBackend` interface
+2. **Dialog Formats**: Add new format parsers
+3. **Statistics Metrics**: Extend `OperationStats` structure
+4. **Tools**: Create new command-line tools
+5. **Tests**: Add comprehensive test coverage
 
-### Adding New Dialog Formats
+### Plugin Architecture
 
-1. Implement format-specific loading functions
-2. Add format detection logic
-3. Update the main dialog loading interface
-4. Add tests for the new format
+- **Dynamic Loading**: Runtime plugin loading
+- **Interface Contracts**: Well-defined interfaces
+- **Version Compatibility**: Backward compatibility
+- **Error Handling**: Graceful plugin failures
 
-## Testing Strategy
+## Security Considerations
 
-### Unit Tests
+### Data Integrity
 
-- Individual component testing
-- Interface compliance testing
-- Error condition testing
+- **Checksums**: Data integrity verification
+- **Validation**: Input validation and sanitization
+- **Error Handling**: Secure error handling
+- **Memory Safety**: RAII and smart pointers
 
-### Integration Tests
+### Package Security
 
-- End-to-end workflow testing
-- API compatibility testing
-- Performance benchmarking
-
-### Backend Testing
-
-- Compression/decompression round-trip testing
-- Error handling testing
-- Performance comparison testing
-
-## Future Enhancements
-
-### Planned Features
-
-1. **Additional Compression Backends**: LZ4, Zlib, Brotli
-2. **Package System**: Secure package creation and management
-3. **Encryption**: OpenSSL-based encryption and signing
-4. **GUI Tools**: Visual dialog editor
-5. **More Formats**: JSON, XML, binary formats
-
-### Architecture Evolution
-
-1. **Plugin System**: Dynamic backend loading
-2. **Configuration System**: Runtime configuration management
-3. **Logging System**: Comprehensive logging and debugging
-4. **Performance Profiling**: Built-in performance monitoring
+- **Encryption**: OpenSSL-based encryption
+- **Digital Signatures**: Package signing
+- **Access Control**: Permission-based access
+- **Audit Trail**: Security event logging
